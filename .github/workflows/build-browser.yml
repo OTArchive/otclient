@@ -47,8 +47,7 @@ jobs:
             -DOPTIONS_ENABLE_IPO=OFF \
             -DTOGGLE_BIN_FOLDER=ON \
             -DCMAKE_BUILD_TYPE=Release \
-            -DTOGGLE_BOT_PROTECTION=OFF \
-            -DSPEED_UP_BUILD_UNITY=OFF
+            -DTOGGLE_BOT_PROTECTION=OFF
 
       - name: Build
         run: cmake --build build
