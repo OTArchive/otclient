@@ -72,7 +72,6 @@ jobs:
             -DVCPKG_BUILD_TYPE=${{ matrix.cmake_build_type }} \
             -DCMAKE_MAKE_PROGRAM=ninja \
             -DOPTIONS_ENABLE_IPO=OFF \
-            -DTOGGLE_BIN_FOLDER=ON \
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
             -DTOGGLE_BOT_PROTECTION=OFF \
             -DSPEED_UP_BUILD_UNITY=OFF
