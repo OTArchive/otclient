@@ -9,8 +9,18 @@ on:
 
 jobs:
   job:
-    name: emscripten-release
+    name: ${{ matrix.buildtype }}
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        buildtype: [emscripten-release, emscripten-debug]
+        include:
+          - buildtype: emscripten-release
+            cmake_build_type: Release
+          - buildtype: emscripten-debug
+            cmake_build_type: Debug
 
     steps:
       - name: Checkout repository
@@ -19,7 +29,7 @@ jobs:
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
         with:
-          version: latest
+          version: "3.1.74"
 
       - name: Get vcpkg commit ID
         id: vcpkg-step
@@ -28,6 +38,14 @@ jobs:
           echo "vcpkg commit ID: $vcpkgCommitId"
           echo "vcpkgGitCommitId=$vcpkgCommitId" >> $GITHUB_OUTPUT
 
+      - name: Cache vcpkg binary artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-binary-cache-${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}-${{ matrix.buildtype }}
+          restore-keys: |
+            vcpkg-binary-cache-${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}-
+
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -35,6 +53,14 @@ jobs:
 
       - name: Install CMake and Ninja
         uses: lukka/get-cmake@latest
+
+      - name: Cache CMake build directory
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/build
+          key: cmake-cache-${{ github.sha }}-${{ matrix.buildtype }}
+          restore-keys: |
+            cmake-cache-${{ github.sha }}-
 
       - name: Configure CMake
         run: |
@@ -46,8 +72,9 @@ jobs:
             -DCMAKE_MAKE_PROGRAM=ninja \
             -DOPTIONS_ENABLE_IPO=OFF \
             -DTOGGLE_BIN_FOLDER=ON \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DTOGGLE_BOT_PROTECTION=OFF
+            -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+            -DTOGGLE_BOT_PROTECTION=OFF \
+            -DSPEED_UP_BUILD_UNITY=OFF
 
       - name: Build
         run: cmake --build build
@@ -56,6 +83,6 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
-          name: otclient-emscripten-release-${{ github.sha }}
+          name: otclient-${{ matrix.buildtype }}-${{ github.sha }}
           path: |
             ${{ github.workspace }}/build/otclient.*
