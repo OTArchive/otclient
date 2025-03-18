@@ -84,10 +84,13 @@ jobs:
         run: |
           ls -R ${{ github.workspace }}/build-${{ matrix.buildtype }}
 
+      - name: Verify Artifact Files Before Upload
+        run: |
+          ls -l ${{ github.workspace }}/build-${{ matrix.buildtype }}/bin/
+
       - name: Create and Upload Artifact
         if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: otclient-${{ matrix.buildtype }}-${{ github.sha }}
-          path: |
-            ${{ github.workspace }}/build-${{ matrix.buildtype }}/bin/*.{wasm,js,html}
+          path: ${{ github.workspace }}/build-${{ matrix.buildtype }}/bin/
