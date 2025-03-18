@@ -73,11 +73,14 @@ jobs:
             -DCMAKE_MAKE_PROGRAM=ninja \
             -DOPTIONS_ENABLE_IPO=OFF \
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            -DTOGGLE_BOT_PROTECTION=OFF \
-            -DSPEED_UP_BUILD_UNITY=OFF
+            -DTOGGLE_BOT_PROTECTION=OFF
 
       - name: Build
         run: cmake --build build-${{ matrix.buildtype }}
+
+      - name: List Build Directory Contents
+        run: |
+          ls -R ${{ github.workspace }}/build-${{ matrix.buildtype }}
 
       - name: Create and Upload Artifact
         if: ${{ github.event_name != 'pull_request' }}
@@ -85,4 +88,5 @@ jobs:
         with:
           name: otclient-${{ matrix.buildtype }}-${{ github.sha }}
           path: |
-            ${{ github.workspace }}/build-${{ matrix.buildtype }}/otclient.*
+            ${{ github.workspace }}/build-${{ matrix.buildtype }}/*.{wasm,js,html}
+            ${{ github.workspace }}/build-${{ matrix.buildtype }}/**/*.{wasm,js,html}
