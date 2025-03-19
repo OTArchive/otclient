@@ -35,7 +35,6 @@ jobs:
         id: vcpkg-step
         run: |
           vcpkgCommitId=$(grep '.builtin-baseline' vcpkg.json | awk -F: '{print $2}' | tr -d '," ')
-          echo "vcpkg commit ID: $vcpkgCommitId"
           echo "vcpkgGitCommitId=$vcpkgCommitId" >> $GITHUB_OUTPUT
 
       - name: Cache vcpkg binary artifacts
@@ -76,17 +75,9 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
             -DTOGGLE_BOT_PROTECTION=OFF
 
-      - name: Build with Verbose Output
+      - name: Build
         run: |
-          cmake --build build-${{ matrix.buildtype }} --target otclient --verbose || { echo "Build failed"; exit 1; }
-
-      - name: List Build Directory Contents
-        run: |
-          ls -R ${{ github.workspace }}/build-${{ matrix.buildtype }}
-
-      - name: Verify Artifact Files Before Upload
-        run: |
-          ls -l ${{ github.workspace }}/build-${{ matrix.buildtype }}/bin/
+          cmake --build build-${{ matrix.buildtype }} --target otclient
 
       - name: Create and Upload Artifact
         if: ${{ github.event_name != 'pull_request' }}
@@ -94,3 +85,4 @@ jobs:
         with:
           name: otclient-${{ matrix.buildtype }}-${{ github.sha }}
           path: ${{ github.workspace }}/build-${{ matrix.buildtype }}/bin/
+          retention-days: 30
