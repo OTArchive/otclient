@@ -73,7 +73,8 @@ jobs:
             -DOPTIONS_ENABLE_IPO=OFF \
             -DTOGGLE_BIN_FOLDER=ON \
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            -DTOGGLE_BOT_PROTECTION=OFF
+            -DTOGGLE_BOT_PROTECTION=OFF \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
       - name: Build
         run: |
