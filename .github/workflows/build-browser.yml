@@ -1,89 +1,97 @@
 name: Build - Emscripten
 
 on:
-  workflow_dispatch:
-  pull_request:
-  push:
-    branches:
-      - main
+ workflow_dispatch:
+ pull_request:
+ push:
+  branches:
+   - main
 
 jobs:
-  job:
-    name: ${{ matrix.buildtype }}
-    runs-on: ubuntu-latest
+ job:
+  name: ${{ matrix.buildtype }}
+  runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        buildtype: [emscripten-release, emscripten-debug]
-        include:
-          - buildtype: emscripten-release
-            cmake_build_type: Release
-          - buildtype: emscripten-debug
-            cmake_build_type: Debug
+  strategy:
+   fail-fast: false
+   matrix:
+    buildtype: [emscripten-release, emscripten-debug]
+    include:
+     - buildtype: emscripten-release
+       cmake_build_type: Release
+     - buildtype: emscripten-debug
+       cmake_build_type: Debug
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  steps:
+   - name: Checkout repository
+     uses: actions/checkout@v4
 
-      - name: Setup Emscripten
-        uses: mymindstorm/setup-emsdk@v14
-        with:
-          version: "3.1.73"
+   - name: Setup Emscripten
+     uses: mymindstorm/setup-emsdk@v14
+     with:
+      version: "3.1.73"
 
-      - name: Get vcpkg commit ID
-        id: vcpkg-step
-        run: |
-          vcpkgCommitId=$(grep '.builtin-baseline' vcpkg.json | awk -F: '{print $2}' | tr -d '," ')
-          echo "vcpkgGitCommitId=$vcpkgCommitId" >> $GITHUB_OUTPUT
+   - name: Get vcpkg commit ID
+     id: vcpkg-step
+     run: |
+      vcpkgCommitId=$(grep '.builtin-baseline' vcpkg.json | awk -F: '{print $2}' | tr -d '," ')
+      echo "vcpkgGitCommitId=$vcpkgCommitId" >> $GITHUB_OUTPUT
 
-      - name: Cache vcpkg binary artifacts
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/vcpkg/archives
-          key: vcpkg-binary-cache-${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}-${{ matrix.buildtype }}
-          restore-keys: |
-            vcpkg-binary-cache-${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}-
+   - name: Cache vcpkg binary artifacts
+     uses: actions/cache@v4
+     with:
+      path: ~/.cache/vcpkg/archives
+      key: vcpkg-binary-cache-${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}-${{ matrix.buildtype }}
+      restore-keys: |
+       vcpkg-binary-cache-${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}-
 
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
+   - name: Setup vcpkg
+     uses: lukka/run-vcpkg@v11
+     with:
+      vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
 
-      - name: Install CMake and Ninja
-        uses: lukka/get-cmake@latest
+   - name: Show vcpkg Logs on Failure
+     if: failure()
+     run: |
+      echo "vcpkg logs for debugging:"
+      cat /home/runner/work/otclient/otclient/vcpkg/buildtrees/rapidjson/config-wasm32-emscripten-dbg-CMakeCache.txt.log || true
+      cat /home/runner/work/otclient/otclient/vcpkg/buildtrees/rapidjson/config-wasm32-emscripten-rel-CMakeCache.txt.log || true
+      cat /home/runner/work/otclient/otclient/vcpkg/buildtrees/rapidjson/config-wasm32-emscripten-out.log || true
 
-      - name: Cache CMake build directory
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/build-${{ matrix.buildtype }}
-          key: cmake-cache-${{ github.sha }}-${{ matrix.buildtype }}
-          restore-keys: |
-            cmake-cache-${{ github.sha }}-${{ matrix.buildtype }}-
+   - name: Install CMake and Ninja
+     uses: lukka/get-cmake@latest
 
-      - name: Configure CMake
-        run: |
-          cmake -G Ninja -S . -B build-${{ matrix.buildtype }} \
-            -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
-            -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
-            -DVCPKG_TARGET_TRIPLET=wasm32-emscripten \
-            -DVCPKG_OVERLAY_PORTS=${{ github.workspace }}/browser/overlay-ports \
-            -DVCPKG_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            -DCMAKE_MAKE_PROGRAM=ninja \
-            -DOPTIONS_ENABLE_IPO=OFF \
-            -DTOGGLE_BIN_FOLDER=ON \
-            -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            -DTOGGLE_BOT_PROTECTION=OFF \
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+   - name: Cache CMake build directory
+     uses: actions/cache@v4
+     with:
+      path: ${{ github.workspace }}/build-${{ matrix.buildtype }}
+      key: cmake-cache-${{ github.sha }}-${{ matrix.buildtype }}
+      restore-keys: |
+       cmake-cache-${{ github.sha }}-${{ matrix.buildtype }}-
 
-      - name: Build
-        run: |
-          cmake --build build-${{ matrix.buildtype }} --target otclient
+   - name: Configure CMake
+     run: |
+      cmake -G Ninja -S . -B build-${{ matrix.buildtype }} \
+        -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+        -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+        -DVCPKG_TARGET_TRIPLET=wasm32-emscripten \
+        -DVCPKG_OVERLAY_PORTS=${{ github.workspace }}/browser/overlay-ports \
+        -DVCPKG_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+        -DCMAKE_MAKE_PROGRAM=ninja \
+        -DOPTIONS_ENABLE_IPO=OFF \
+        -DTOGGLE_BIN_FOLDER=ON \
+        -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+        -DTOGGLE_BOT_PROTECTION=OFF \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
-      - name: Create and Upload Artifact
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: otclient-${{ matrix.buildtype }}-${{ github.sha }}
-          path: ${{ github.workspace }}/build-${{ matrix.buildtype }}/bin/
-          retention-days: 30
+   - name: Build
+     run: |
+      cmake --build build-${{ matrix.buildtype }} --target otclient
+
+   - name: Create and Upload Artifact
+     if: ${{ github.event_name != 'pull_request' }}
+     uses: actions/upload-artifact@v4
+     with:
+      name: otclient-${{ matrix.buildtype }}-${{ github.sha }}
+      path: ${{ github.workspace }}/build-${{ matrix.buildtype }}/bin/
+      retention-days: 30
