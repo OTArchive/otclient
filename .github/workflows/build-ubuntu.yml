@@ -48,11 +48,17 @@ jobs:
           echo "vcpkg commit ID: $vcpkgCommitId"
           echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$GITHUB_OUTPUT"
 
+      - name: Configure custom triplet
+        run: |
+          mkdir -p triplets
+          echo "set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_POLICY_VERSION_MINIMUM=3.5)" > triplets/ubuntu-custom.cmake
+
       - name: Get vcpkg commit id from vcpkg.json
         uses: lukka/run-vcpkg@main
         with:
           vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
           vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
+          vcpkgTriplet: ubuntu-custom
 
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@main
