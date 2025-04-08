@@ -53,6 +53,7 @@ jobs:
           vcpkgGitURL: "https://github.com/microsoft/vcpkg.git"
           vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
           vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
+          configurePresetAdditionalArgs: "['-DCMAKE_POLICY_VERSION_MINIMUM=3.5']"
 
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@main
@@ -62,7 +63,6 @@ jobs:
         with:
           configurePreset: ${{ matrix.buildtype }}
           buildPreset: ${{ matrix.buildtype }}
-          configurePresetAdditionalArgs: "['-DCMAKE_POLICY_VERSION_MINIMUM=3.5']"
 
       - name: Create and Upload Artifact (exe)
         uses: actions/upload-artifact@main
