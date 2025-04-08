@@ -53,7 +53,6 @@ jobs:
         with:
           vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
           vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
-          configurePresetAdditionalArgs: "['-DCMAKE_POLICY_VERSION_MINIMUM=3.5']"
 
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@main
@@ -63,6 +62,7 @@ jobs:
         with:
           configurePreset: ${{ matrix.buildtype }}
           buildPreset: ${{ matrix.buildtype }}
+          configurePresetAdditionalArgs: "['-DCMAKE_POLICY_VERSION_MINIMUM=3.5']"
 
       - name: Create and Upload Artifact
         if: ${{ github.event_name != 'pull_request' }}
