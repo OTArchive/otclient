@@ -62,7 +62,7 @@ jobs:
         with:
           configurePreset: ${{ matrix.buildtype }}
           buildPreset: ${{ matrix.buildtype }}
-          configurePresetAdditionalArgs: '-DCMAKE_POLICY_VERSION_MINIMUM=3.5'
+          configurePresetAdditionalArgs: "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 
       - name: Create and Upload Artifact (exe)
         uses: actions/upload-artifact@main
