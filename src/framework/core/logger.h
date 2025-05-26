@@ -26,8 +26,9 @@
 
 #include <fstream>
 
-#undef FMT_STRING
-#define FMT_STRING(s) s
+#if defined(__EMSCRIPTEN__)
+#define FMT_ENFORCE_COMPILE_STRING 0
+#endif
 
 #include <fmt/format.h>
 
