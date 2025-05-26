@@ -26,10 +26,6 @@
 
 #include <fstream>
 
-#if defined(__EMSCRIPTEN__)
-#define FMT_ENFORCE_COMPILE_STRING 0
-#endif
-
 #include <fmt/format.h>
 
 struct LogMessage
