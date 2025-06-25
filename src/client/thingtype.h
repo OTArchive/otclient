@@ -317,6 +317,7 @@ public:
     void unserializeAppearance(uint16_t clientId, ThingCategory category, const appearances::Appearance& appearance);
     void unserialize(uint16_t clientId, ThingCategory category, const FileStreamPtr& fin);
     void unserializeOtml(const OTMLNodePtr& node);
+    void applyAppearanceFlags(const appearances::AppearanceFlags& flags);
 
 #ifdef FRAMEWORK_EDITOR
     void serialize(const FileStreamPtr& fin);
@@ -324,6 +325,7 @@ public:
 #endif
 
     void draw(const Point& dest, int layer, int xPattern, int yPattern, int zPattern, int animationPhase, const Color& color, bool drawThings = true, const LightViewPtr& lightView = nullptr, const DrawConductor& conductor = DEFAULT_DRAW_CONDUCTOR);
+
     void drawWithFrameBuffer(const TexturePtr& texture, const Rect& screenRect, const Rect& textureRect, const Color& color, const DrawConductor& conductor);
 
     uint16_t getId() { return m_id; }
@@ -462,7 +464,7 @@ public:
     float getOpacity() { return m_opacity; }
     void setPathable(bool var);
     int getExactHeight();
-    TexturePtr getTexture(int animationPhase);
+    const TexturePtr& getTexture(int animationPhase);
 
     std::string getName() { return m_name; }
     std::string getDescription() { return m_description; }
